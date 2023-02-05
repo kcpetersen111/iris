@@ -9,13 +9,19 @@ import (
 
 func DbSetupConnection(setUpDB bool) (*sql.DB, error) {
 	log.Printf("Starting database setup")
-	db, err := sql.Open("mysql", ":password@/irisDB")
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/irisDB")
 	if err != nil {
-		log.Printf("Error starting up the database: %v\n", err)
+		// log.Printf("Error starting up the database: %v\n", err)
+		return nil, err
 	}
+	log.Printf("Connected to database successfully")
 	if setUpDB {
-		DbSetup(db)
+		err = DbSetup(db)
 	}
+	if err != nil {
+		return nil, err
+	}
+
 	log.Printf("Database successfully setup")
 	return db, nil
 }
