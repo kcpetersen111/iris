@@ -1,4 +1,4 @@
-module persist
+module github.com/kcpetersen111/iris/server/persist
 
 go 1.18
 
