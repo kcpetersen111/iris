@@ -1,14 +1,10 @@
 package persist
 
-import (
-	"database/sql"
-)
-
 //This will do all of the first time set up for the database
 //doing things like creating tables
-func DbSetup(db *sql.DB) error {
+func (db *DBInterface) DbSetup() error {
 
-	tx, err := db.Begin()
+	tx, err := db.Database.Begin()
 	if err != nil {
 		return err
 	}

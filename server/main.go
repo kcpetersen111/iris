@@ -13,10 +13,10 @@ func main() {
 	flag.BoolVar(&setUpDB, "s", false, "Will run script to set up the database, Only needs to be done the first time starting up a server")
 	flag.Parse()
 
-	_, err := persist.DbSetupConnection(setUpDB)
+	db, err := persist.DbSetupConnection(setUpDB)
 	if err != nil {
 		log.Fatalf("Error in starting up the database: %v", err)
 	}
-	server := httpServer.NewIrisServer("localhost:8000")
+	server := httpServer.NewIrisServer("localhost:8000", db)
 	server.Serve()
 }

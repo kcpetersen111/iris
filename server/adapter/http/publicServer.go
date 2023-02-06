@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/kcpetersen111/iris/server/persist"
 )
 
 type Server interface {
 	Serve() (Server, error)
 }
 type IrisServer struct {
-	address string
+	Address string
+	DB      *persist.DBInterface
 }
 type InputJson struct {
 	Message string `json:"message"`
@@ -30,7 +32,7 @@ func ping(w http.ResponseWriter, _r *http.Request) {
 	w.Write(message)
 }
 
-func dbtest(w http.ResponseWriter, r *http.Request) {
+func (s *IrisServer) dbtest(w http.ResponseWriter, r *http.Request) {
 	var input InputJson
 	rawRequest, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -43,6 +45,8 @@ func dbtest(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("dbtest request body %+v,", input)
 
+	s.DB.InsertTest(input.Message)
+
 	w.Write([]byte("message: " + input.Message))
 }
 
@@ -51,18 +55,19 @@ func (s *IrisServer) Serve() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ping", ping).Methods("GET")
-	router.HandleFunc("/test", dbtest).Methods("POST")
+	router.HandleFunc("/test", s.dbtest).Methods("POST")
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         s.address,
+		Addr:         s.Address,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 	log.Fatal(srv.ListenAndServe())
 }
-func NewIrisServer(address string) *IrisServer {
+func NewIrisServer(address string, db *persist.DBInterface) *IrisServer {
 	return &IrisServer{
-		address: address,
+		Address: address,
+		DB:      db,
 	}
 }
