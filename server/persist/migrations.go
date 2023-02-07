@@ -17,6 +17,18 @@ func (db *DBInterface) DbSetup() error {
 	if err != nil {
 		return err
 	}
+
+	_, err = tx.Exec(
+		`CREATE TABLE users(
+			name TEXT,
+			userID TEXT,
+			password TEXT
+			);`,
+	)
+	if err != nil {
+		return err
+	}
+
 	err = tx.Commit()
 
 	return err
