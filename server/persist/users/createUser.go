@@ -1,31 +1,37 @@
 package users
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"github.com/kcpetersen111/iris/server/adapter/http/user"
+	"github.com/kcpetersen111/iris/server/persist"
 )
-
-type MessageJson struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
 func CreateUser(username, password string) {
 
 }
 
-func CreateUserEndpoint(w http.ResponseWriter, r *http.Request) {
-	var input MessageJson
-	rawRequest, err := ioutil.ReadAll(r.Body)
+func (u user.User) GetUserByEmail(db *persist.DBInterface) (user.User, error) {
+	tx, err := db.Database.Begin()
 	if err != nil {
-		log.Printf("Error reading request: %v", err)
+		return nil, err
 	}
-	err = json.Unmarshal(rawRequest, &input)
+	row, err := tx.Query(`
+		SELECT UserId, Name, Email, Role
+		FROM users
+		WHERE ? = Email;
+	`, u.Email)
+	defer row.Close()
 	if err != nil {
-		log.Printf("Error unmarshaling request: %v", err)
+		tx.Rollback()
+		return nil, err
 	}
-	CreateUser(input.Username, input.Password)
-	w.WriteHeader(http.StatusOK)
+	row.Next()
+	var UserId, name, email, role string
+	row.Scan(&UserId, &name, &email, &role)
+
+	return user.User{
+		UserId: UserId,
+		Name:   name,
+		Email:  email,
+		Role:   role,
+	}, nil
 }

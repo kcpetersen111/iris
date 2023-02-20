@@ -57,6 +57,14 @@ func (s *IrisServer) Serve() {
 	router.HandleFunc("/ping", ping).Methods("GET")
 	router.HandleFunc("/test", s.dbtest).Methods("POST")
 
+	// User methods
+	// ur := router.PathPrefix("/user").Subrouter()
+	// userRouter := CreateUserRouter(s.DB)
+	user := UserRoutes{
+		// DB: s.DB,
+	}
+	router.HandleFunc("/user", user.CreateUser).Methods("POST")
+
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         s.Address,
