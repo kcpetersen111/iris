@@ -31,6 +31,19 @@ func (db *DBInterface) DbSetup() error {
 		return err
 	}
 
+	//I am going to say platform is where they sent it ie: discord server, dm
+	_, err = tx.Exec(
+		`CREATE TABLE messages(
+			sender TEXT,
+			receiver TEXT,
+			message TEXT,
+			platform TEXT
+			);`,
+	)
+	if err != nil {
+		return err
+	}
+
 	err = tx.Commit()
 
 	return err

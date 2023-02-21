@@ -18,3 +18,35 @@ func (db *DBInterface) InsertTest(message string) error {
 	return tx.Commit()
 
 }
+
+func (db *DBInterface) InsertMessage(message, fromUser, platform string, toUser ...string) error {
+	if toUser == nil {
+		return fmt.Errorf("No users selected to send to")
+	}
+
+	tx, err := db.Database.Begin()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	for toU := range toUser {
+
+		_, err = tx.Exec(`
+		INSERT INTO messages VALUE
+		(?, ?, ?, ?)
+		`,
+			fromUser,
+			toU,
+			message,
+			platform,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	tx.Commit()
+
+	return nil
+}

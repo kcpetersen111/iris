@@ -30,28 +30,6 @@ func CreateUserRouter(db *persist.DBInterface) mux.Router {
 	return *router
 }
 
-// func (u *UserRoutes) CreateUser(w http.ResponseWriter, r *http.Request) {
-// 	var input users.MessageJson
-// 	rawRequest, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		log.Printf("Error reading request: %v", err)
-// 	}
-// 	err = json.Unmarshal(rawRequest, &input)
-// 	if err != nil {
-// 		log.Printf("Error unmarshaling request: %v", err)
-// 	}
-
-// 	users.CreateUser(input.Username, input.Password)
-
-// 	log.Printf("dbtest request body %+v,", input)
-
-// 	w.WriteHeader(http.StatusOK)
-// 	// Write([]byte(http.StatusOK))
-
-// }
-
-//user auth guide
-
 type Token struct {
 	Role        string `json:"role"`
 	Email       string `json:"email"`

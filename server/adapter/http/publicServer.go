@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kcpetersen111/iris/server/persist"
+	"github.com/kcpetersen111/iris/server/ports/websockets"
 )
 
 type Server interface {
@@ -66,6 +67,12 @@ func (s *IrisServer) Serve() {
 
 	router.HandleFunc("/user", user.SignUp).Methods("POST")
 	router.HandleFunc("/user", user.SignIn).Methods("GET")
+
+	hub := websockets.NewHub(s.DB)
+
+	router.HandleFunc("/start", IsAuthorized(func(w http.ResponseWriter, r *http.Request) {
+		websockets.ServeWs(hub, w, r)
+	})).Methods("POST")
 
 	srv := &http.Server{
 		Handler:      router,
