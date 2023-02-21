@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/kcpetersen111/iris/server/persist"
+	"github.com/kcpetersen111/iris/server/persist/users"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -50,76 +52,30 @@ func CreateUserRouter(db *persist.DBInterface) mux.Router {
 
 //user auth guide
 
-type User struct {
-	UserID   string `json:UserID`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
-}
-
-type Authentication struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 type Token struct {
 	Role        string `json:"role"`
 	Email       string `json:"email"`
 	TokenString string `json:"token"`
 }
 
-// func GetDatabase() *gorm.DB {
-// 	databasename := "userdb"
-// 	database := "postgres"
-// 	databasepassword := "1312"
-// 	databaseurl := "postgres://postgres:" + databasepassword + "@localhost/" + databasename + "?sslmode=disable"
-// 	connection, err := gorm.Open(database, databaseurl)
-// 	if err != nil {
-// 		log.Fatalln("wrong database url")
-// 	}
-
-// 	sqldb := connection.DB()
-
-// 	err = sqldb.Ping()
-// 	if err != nil {
-// 		log.Fatal("database connected")
-// 	}
-
-// 	fmt.Println("connected to database")
-// 	return connection
-// }
-
-// func InitialMigration() {
-// 	connection := GetDatabase()
-// 	defer Closedatabase(connection)
-// 	connection.AutoMigrate(User{})
-// }
-
-// func Closedatabase(connection *gorm.DB) {
-// 	sqldb := connection.DB()
-// 	sqldb.Close()
-
-// }
-
 func (u UserRoutes) SignUp(w http.ResponseWriter, r *http.Request) {
 	// connection := GetDatabase()
 	// defer Closedatabase(connection)
 
-	var user User
+	var user users.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		// var err error
-		err := fmt.Errorf("Error in reading body")
+		err := fmt.Errorf("Error in reading body: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
 	}
 	// var dbuser User
 	// connection.Where("email = ?", user.Email).First(&dbuser)
-	dbuser, err := user.VerifyEmail(u.DB)
+	dbuser, err := user.GetUserByEmail(u.DB)
 	if err != nil {
-		err := fmt.Errorf("Error in DB")
+		err := fmt.Errorf("Error in DB: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
@@ -140,7 +96,13 @@ func (u UserRoutes) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//insert user details in database
-	connection.Create(&user)
+	err = user.CreateUser(u.DB)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
@@ -151,7 +113,8 @@ func GeneratehashPassword(password string) (string, error) {
 }
 
 func GenerateJWT(email, role string) (string, error) {
-	var mySigningKey = []byte(secretkey)
+	// secretkey := os.Getenv("jwt")
+	var mySigningKey = []byte("JWTTOKEN")
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
@@ -169,25 +132,23 @@ func GenerateJWT(email, role string) (string, error) {
 	return tokenString, nil
 }
 
-func SignIn(w http.ResponseWriter, r *http.Request) {
-	connection := GetDatabase()
-	defer Closedatabase(connection)
+func (u UserRoutes) SignIn(w http.ResponseWriter, r *http.Request) {
 
-	var authdetails Authentication
+	var authdetails users.Authentication
 	err := json.NewDecoder(r.Body).Decode(&authdetails)
 	if err != nil {
-		var err Error
-		err = SetError(err, "Error in reading body")
+		err = fmt.Errorf("Error in reading body: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
 	}
 
-	var authuser User
-	connection.Where("email = ?", authdetails.Email).First(&authuser)
+	authuser, err := authdetails.GetUserByEmail(u.DB)
+	// fmt.Println(authdetails)
+	// connection.Where("email = ?", authdetails.Email).First(&authuser)
+
 	if authuser.Email == "" {
-		var err Error
-		err = SetError(err, "Username or Password is incorrect")
+		err = fmt.Errorf("Username or Password is incorrect")
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
@@ -195,9 +156,9 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 	check := CheckPasswordHash(authdetails.Password, authuser.Password)
 
+	// fmt.Printf("HASH: %v, P1: %v, P2: %v \n", check, authdetails.Password, authuser.Password)
 	if !check {
-		var err Error
-		err = SetError(err, "Username or Password is incorrect")
+		err = fmt.Errorf("Username or Password is incorrect")
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
@@ -205,8 +166,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 	validToken, err := GenerateJWT(authuser.Email, authuser.Role)
 	if err != nil {
-		var err Error
-		err = SetError(err, "Failed to generate token")
+		err = fmt.Errorf("Failed to generate token: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
@@ -225,17 +185,21 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
+// type middleware interface {
+// 	Middleware(handler http.Handler) http.Handler
+// }
+
 func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// fmt.Println(r.Header["Token"])
 
 		if r.Header["Token"] == nil {
-			var err Error
-			err = SetError(err, "No Token Found")
+			err := fmt.Errorf("No Token Found")
 			json.NewEncoder(w).Encode(err)
 			return
 		}
 
-		var mySigningKey = []byte(secretkey)
+		var mySigningKey = []byte("JWTTOKEN")
 
 		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -245,12 +209,11 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil {
-			var err Error
-			err = SetError(err, "Your Token has been expired")
+			var err error
+			err = fmt.Errorf("Your Token has been expired: %v", err)
 			json.NewEncoder(w).Encode(err)
 			return
 		}
-
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			if claims["role"] == "admin" {
 
@@ -265,8 +228,8 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}
-		var reserr Error
-		reserr = SetError(reserr, "Not Authorized")
+
+		err = fmt.Errorf("Not Authorized")
 		json.NewEncoder(w).Encode(err)
 	}
 }

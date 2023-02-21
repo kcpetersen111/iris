@@ -46,7 +46,7 @@ func (s *IrisServer) dbtest(w http.ResponseWriter, r *http.Request) {
 	log.Printf("dbtest request body %+v,", input)
 
 	s.DB.InsertTest(input.Message)
-
+	// fmt.Println(r.Header["Role"])
 	w.Write([]byte("message: " + input.Message))
 }
 
@@ -55,15 +55,17 @@ func (s *IrisServer) Serve() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ping", ping).Methods("GET")
-	router.HandleFunc("/test", s.dbtest).Methods("POST")
+	router.HandleFunc("/test", IsAuthorized(s.dbtest)).Methods("POST")
 
 	// User methods
 	// ur := router.PathPrefix("/user").Subrouter()
 	// userRouter := CreateUserRouter(s.DB)
 	user := UserRoutes{
-		// DB: s.DB,
+		DB: s.DB,
 	}
-	router.HandleFunc("/user", user.CreateUser).Methods("POST")
+
+	router.HandleFunc("/user", user.SignUp).Methods("POST")
+	router.HandleFunc("/user", user.SignIn).Methods("GET")
 
 	srv := &http.Server{
 		Handler:      router,
