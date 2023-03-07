@@ -6,7 +6,7 @@
 
     
 </script>
-<div class="flex bg-gray-600 h-10 justify-end items-center">
+<div class="flex bg-gray-600 h-14 justify-end items-center col-span-full col-start-2">
 
     <div class="items-center">
         <input placeholder="Email" bind:value={Email} class="h-5" on:keydown={(key)=>{if(key.code=="Enter"){login()}}}>

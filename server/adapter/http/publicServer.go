@@ -73,7 +73,7 @@ func (s *IrisServer) Serve() {
 
 	router.HandleFunc("/start", IsAuthorized(func(w http.ResponseWriter, r *http.Request) {
 		websockets.ServeWs(hub, w, r)
-	})).Methods("POST")
+	}))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},

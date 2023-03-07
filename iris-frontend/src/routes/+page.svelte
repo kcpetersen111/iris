@@ -1,14 +1,26 @@
 <script>
-	import { userStore } from "../resources/login";
 	import Login from "./login.svelte";
-
- 
-
+    import ConversationBar from "./conversationBar.svelte";
+	import Messageing from "./messageing.svelte";
+	import { socket, startUp } from "../resources/startup";
+    
+    console.log("sadf");
+    
+    let z = ()=>{
+        console.log("sadf")
+        socket.set(startUp())
+    };
+    z();
 
 </script>
 <!-- {$writableStore} -->
 <!-- {#if userId ==""} -->
-<Login></Login>
+<div class="grid grid-cols-6 grid-rows-6 h-screen">
+    <Login></Login>
+    <ConversationBar></ConversationBar>
+    <Messageing></Messageing>
+</div>
+
 <!-- {:else}
     <p>Welcome {userName}</p>
 {/if} -->

@@ -2,6 +2,7 @@ package websockets
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -40,6 +41,7 @@ type Hub struct {
 }
 
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	fmt.Println("New web socket")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
