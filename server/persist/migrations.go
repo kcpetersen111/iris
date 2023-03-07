@@ -20,11 +20,12 @@ func (db *DBInterface) DbSetup() error {
 
 	_, err = tx.Exec(
 		`CREATE TABLE users(
-			userID TEXT,
+			userID VARCHAR(45),
 			name TEXT,
 			email TEXT,
 			role TEXT,
-			password TEXT
+			password TEXT,
+			PRIMARY KEY(userID)
 			);`,
 	)
 	if err != nil {

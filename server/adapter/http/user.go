@@ -64,6 +64,7 @@ func (u UserRoutes) SignUp(w http.ResponseWriter, r *http.Request) {
 		// var err error
 		err = fmt.Errorf("Email already in use")
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(err)
 		return
 	}
@@ -74,14 +75,16 @@ func (u UserRoutes) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//insert user details in database
-	err = user.CreateUser(u.DB)
+	uuid, err := user.CreateUser(u.DB)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(err)
 		return
 	}
 
+	user.UserID = uuid.String()
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
 }
 
@@ -154,8 +157,13 @@ func (u UserRoutes) SignIn(w http.ResponseWriter, r *http.Request) {
 	token.Email = authuser.Email
 	token.Role = authuser.Role
 	token.TokenString = validToken
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(token)
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(token); err != nil {
+		log.Printf("%v\n", err)
+	}
+
 }
 
 func CheckPasswordHash(password, hash string) bool {

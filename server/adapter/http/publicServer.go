@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kcpetersen111/iris/server/persist"
 	"github.com/kcpetersen111/iris/server/ports/websockets"
+	"github.com/rs/cors"
 )
 
 type Server interface {
@@ -65,8 +66,8 @@ func (s *IrisServer) Serve() {
 		DB: s.DB,
 	}
 
-	router.HandleFunc("/user", user.SignUp).Methods("POST")
-	router.HandleFunc("/user", user.SignIn).Methods("GET")
+	router.HandleFunc("/createUser", user.SignUp).Methods("POST")
+	router.HandleFunc("/user", user.SignIn).Methods("POST")
 
 	hub := websockets.NewHub(s.DB)
 
@@ -74,8 +75,13 @@ func (s *IrisServer) Serve() {
 		websockets.ServeWs(hub, w, r)
 	})).Methods("POST")
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowCredentials: true,
+	})
+
 	srv := &http.Server{
-		Handler:      router,
+		Handler:      c.Handler(router),
 		Addr:         s.Address,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	UserID   string `json:UserID`
+	UserID   string `json:"userID"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -20,22 +20,22 @@ type Authentication struct {
 	Password string `json:"password"`
 }
 
-func (u User) CreateUser(db *persist.DBInterface) error {
+func (u User) CreateUser(db *persist.DBInterface) (uuid.UUID, error) {
 	fmt.Println(u)
 	if u.Email == "" || u.Name == "" || u.Password == "" {
-		return fmt.Errorf("Email, Name, or password is empty")
+		return uuid.Nil, fmt.Errorf("Email, Name, or password is empty")
 	}
-	uuid := uuid.New()
+	uu := uuid.New()
 	tx, err := db.Database.Begin()
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	_, err = tx.Query(`
 	INSERT INTO users VALUES
 	(?, ?, ?, ?, ? );
 	`,
-		uuid,
+		uu,
 		u.Name,
 		u.Email,
 		u.Role,
@@ -43,11 +43,11 @@ func (u User) CreateUser(db *persist.DBInterface) error {
 	)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return uuid.Nil, err
 	}
 	tx.Commit()
 
-	return nil
+	return uu, nil
 
 }
 

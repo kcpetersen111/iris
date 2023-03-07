@@ -17,6 +17,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error in starting up the database: %v", err)
 	}
-	server := httpServer.NewIrisServer("localhost:8000", db)
+	server := httpServer.NewIrisServer("localhost:4444", db)
 	server.Serve()
 }
