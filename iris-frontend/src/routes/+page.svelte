@@ -1,24 +1,24 @@
 <script>
-	import Login from "./login.svelte";
-    import ConversationBar from "./conversationBar.svelte";
-	import Messageing from "./messageing.svelte";
-	import { socket, startUp } from "../resources/startup";
-    
-    console.log("sadf");
-    
-    let z = ()=>{
-        console.log("sadf")
-        socket.set(startUp())
-    };
-    z();
+	import Login from './login.svelte';
+	import ConversationBar from './conversationBar.svelte';
+	import Messageing from './messageing.svelte';
+	import { socket, startUp } from '../resources/startup';
 
+	console.log('sadf');
+
+	//let z = () => {
+	//	console.log('sadf');
+	//	socket.set(startUp());
+	//};
+	//    z();
 </script>
+
 <!-- {$writableStore} -->
 <!-- {#if userId ==""} -->
 <div class="grid grid-cols-6 grid-rows-6 h-screen">
-    <Login></Login>
-    <ConversationBar></ConversationBar>
-    <Messageing></Messageing>
+	<Login />
+	<ConversationBar />
+	<Messageing />
 </div>
 
 <!-- {:else}
@@ -31,3 +31,4 @@
 <button on:click={()=>{count++}} class="bg-green-500 rounded-md"> Clicked {count} Times</button>
 <br/>
 <Test></Test> -->
+
