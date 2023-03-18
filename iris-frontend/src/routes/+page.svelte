@@ -2,9 +2,8 @@
 	import Login from './login.svelte';
 	import ConversationBar from './conversationBar.svelte';
 	import Messageing from './messageing.svelte';
-	import { socket, startUp } from '../resources/startup';
-
-	console.log('sadf');
+	import { startUp } from '../resources/startup';
+	import { writable } from 'svelte/store';
 
 	//let z = () => {
 	//	console.log('sadf');
@@ -31,4 +30,3 @@
 <button on:click={()=>{count++}} class="bg-green-500 rounded-md"> Clicked {count} Times</button>
 <br/>
 <Test></Test> -->
-
