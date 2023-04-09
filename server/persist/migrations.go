@@ -36,14 +36,30 @@ func (db *DBInterface) DbSetup() error {
 	}
 
 	//I am going to say platform is where they sent it ie: discord server, dm
+	//will probably need to add message id at some point if I want to add editing or deleting messages
 	_, err = tx.Exec(
 		`CREATE TABLE IF NOT EXISTS messages(
-			sender TEXT,
-			receiver TEXT,
+			sender VARCHAR(45),
+			receiver VARCHAR(45),
 			message TEXT,
-			platform TEXT,
+			platform VARCHAR(45),
 			isCall INT,
-			timeStamp DATETIME
+			timeStamp DATETIME,
+			PRIMARY KEY(sender, receiver)
+			);`,
+	)
+	if err != nil {
+		return err
+	}
+
+	//I am going to say platform is where they sent it ie: discord server, dm
+
+	_, err = tx.Exec(
+		`CREATE TABLE IF NOT EXISTS platforms(
+			platformID VARCHAR(45),
+			platformName TEXT,
+			userId VARCHAR(45)
+			PRIMARY KEY(platformID)
 			);`,
 	)
 	if err != nil {
