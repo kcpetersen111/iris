@@ -71,9 +71,12 @@ func (s *IrisServer) Serve() {
 
 	hub := websockets.NewHub(s.DB)
 
-	router.HandleFunc("/start", IsAuthorized(func(w http.ResponseWriter, r *http.Request) {
-		websockets.ServeWs(hub, w, r)
-	}))
+	// router.HandleFunc("/start", IsAuthorized(func(w http.ResponseWriter, r *http.Request) {
+	// 	websockets.ServeWs(hub, w, r)
+	// }))
+	router.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
+		websockets.StartCall(hub, w, r)
+	})
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
@@ -88,6 +91,7 @@ func (s *IrisServer) Serve() {
 	}
 	log.Fatal(srv.ListenAndServe())
 }
+
 func NewIrisServer(address string, db *persist.DBInterface) *IrisServer {
 	return &IrisServer{
 		Address: address,

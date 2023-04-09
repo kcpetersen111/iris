@@ -33,7 +33,7 @@ func (db *DBInterface) InsertMessage(message, fromUser, platform string, toUser 
 
 		_, err = tx.Exec(`
 		INSERT INTO messages VALUE
-		(?, ?, ?, ?)
+		(?, ?, ?, ?, 0);
 		`,
 			fromUser,
 			toU,

@@ -176,6 +176,7 @@ func CheckPasswordHash(password, hash string) bool {
 // }
 
 func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
+	log.Printf("User authenticating")
 	return func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println(r.Header["Token"])
 

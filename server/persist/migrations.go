@@ -38,7 +38,8 @@ func (db *DBInterface) DbSetup() error {
 			sender TEXT,
 			receiver TEXT,
 			message TEXT,
-			platform TEXT
+			platform TEXT,
+			call INT
 			);`,
 	)
 	if err != nil {
