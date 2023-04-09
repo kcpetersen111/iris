@@ -12,7 +12,7 @@ func (db *DBInterface) RequestCall(callerId, calleeId string) error {
 	}
 	tx.Exec(`
 		INSERT INTO messages VALUE
-		(?,?,?,"",1);
+		(?,?,"","",1,?);
 	`,
 		calleeId,
 		calleeId,

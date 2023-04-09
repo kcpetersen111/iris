@@ -12,7 +12,7 @@ type DBInterface struct {
 }
 
 func DbSetupConnection(setUpDB bool) (*DBInterface, error) {
-	log.Printf("Starting database setup")
+	log.Printf("Starting database")
 	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/irisDB")
 	if err != nil {
 		// log.Printf("Error starting up the database: %v\n", err)
@@ -31,6 +31,6 @@ func DbSetupConnection(setUpDB bool) (*DBInterface, error) {
 		return &DBInterface{}, err
 	}
 
-	log.Printf("Database successfully setup")
+	log.Printf("Database successfully started")
 	return &DBInter, nil
 }

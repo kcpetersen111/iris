@@ -41,8 +41,8 @@ type Hub struct {
 }
 
 type InitInfo struct {
-	Caller string
-	Callee string
+	Caller string `json:"Caller"`
+	Callee string `json:"Callee"`
 }
 
 func StartCall(hub *Hub, w http.ResponseWriter, r *http.Request) {
@@ -55,14 +55,37 @@ func StartCall(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	msgType, msg, err := conn.ReadMessage()
+	if err != nil {
+		log.Printf(fmt.Sprintf("Incoming call error in reading: %v", err))
+		conn.Close()
+		return
+	}
 	if msgType != 1 {
 		log.Printf("Incoming call send incorect opening message\n")
 		conn.Close()
 		return
 	}
 	var init InitInfo
-	json.Unmarshal(msg, &init)
-	persist.RequestCall(init.Callee, init.Caller)
+	err = json.Unmarshal(msg, &init)
+
+	if err != nil {
+		log.Println(fmt.Sprintf("Error in reading the startup metadata: %v", err))
+		conn.Close()
+		return
+	}
+	requestRetry := 0
+
+persistCallSetup:
+	err = hub.db.RequestCall(init.Callee, init.Caller)
+	if err != nil {
+		if requestRetry < 5 {
+			requestRetry++
+			goto persistCallSetup
+		} else {
+			log.Printf("Error in requesting call: %v", err)
+			return
+		}
+	}
 
 	client := &Client{hub: hub, conn: conn, send: nil, metaData: init, receive: make(chan []byte, 256)}
 	client.hub.register <- client
