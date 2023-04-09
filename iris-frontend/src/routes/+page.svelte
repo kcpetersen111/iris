@@ -2,7 +2,12 @@
 	import Login from './login.svelte';
 	import ConversationBar from './conversationBar.svelte';
 	import Messageing from './messageing.svelte';
+	import { onMount } from 'svelte';
+	import { pulling } from '../resources/messages';
 		
+onMount(()=>{
+	setInterval(pulling,1000)
+})
 
 </script>
 

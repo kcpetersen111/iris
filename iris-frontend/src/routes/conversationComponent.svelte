@@ -18,6 +18,9 @@ function changeConversation() {
 }
 
 function shorten(text: String) {
+	if (text == undefined) {
+		return "";
+	}
 	if (text.length > 14) {
 		return text.slice(0, 15);
 	}
