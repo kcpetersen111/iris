@@ -2,14 +2,8 @@
 	import Login from './login.svelte';
 	import ConversationBar from './conversationBar.svelte';
 	import Messageing from './messageing.svelte';
-	import { startUp } from '../resources/startup';
-	import { writable } from 'svelte/store';
+		
 
-	//let z = () => {
-	//	console.log('sadf');
-	//	socket.set(startUp());
-	//};
-	//    z();
 </script>
 
 <!-- {$writableStore} -->

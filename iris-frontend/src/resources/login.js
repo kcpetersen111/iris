@@ -1,7 +1,7 @@
 import { serverAddr,serverPort } from "../resources/variables";
 import {writable} from "svelte/store"
 
-const userStore = writable(0)
+const userStore = writable("")
 
 export async function login(Email, Password){
     // console.log(Email)
@@ -68,7 +68,7 @@ export async function createUser(Email, Password){
         console.log("response body was not json");
     }
         
-    if(response.status ==201){
+    if(response.status ==201 || response.status==200){
         console.log("Successful user creation")
         userStore.set(body.userID)
 

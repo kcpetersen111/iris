@@ -1,5 +1,5 @@
 <script>
-	console.log('made it here');
+	// console.log('made it here');
 	import { each } from 'svelte/internal';
 	import ConversationComponent from './conversationComponent.svelte';
 	const eyeLogo = new URL('../../static/eyeLogo.svg', import.meta.url).href;
