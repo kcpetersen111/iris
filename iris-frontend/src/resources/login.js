@@ -76,14 +76,15 @@ export async function createUser(Email, Password){
     }else if(response.status ==401){
         console.log("Unsuccessful create attempt")
         this.loginPassword ="";
-        alert("log in failed")
+        return
 
     } else if(response.status == 409){
         console.log("User email is taken")
         this.loginPassword ="";
+        return
     }else {
         console.log("There was some sort of error. ", response.status, response);
-
+        return
     }
 }
 

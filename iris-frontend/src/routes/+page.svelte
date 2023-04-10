@@ -4,24 +4,35 @@
 	import Messageing from './messageing.svelte';
 	import { onMount } from 'svelte';
 	import { pulling } from '../resources/messages';
-		
+	import { userStore } from '../resources/login';
+	
+	let userId = "";
+	userStore.subscribe((id)=>{
+		userId = id;
+	})
+
 onMount(()=>{
-	setInterval(pulling,1000)
+	// setInterval(pulling,1000)
 })
 
 </script>
 
 <!-- {$writableStore} -->
-<!-- {#if userId ==""} -->
-<div class="grid grid-cols-6 grid-rows-6 h-screen">
-	<Login />
-	<ConversationBar />
-	<Messageing />
-</div>
+{#if userId !=""}
+	<div class="grid grid-cols-6 grid-rows-6 h-screen">
+		<ConversationBar />
+		<Messageing />
+	</div>
+	
+{:else}
+    <!-- login page -->
 
-<!-- {:else}
-    <p>Welcome {userName}</p>
-{/if} -->
+		<Login />
+
+	
+	
+	<!-- <button on:click={()=>{userStore.set("succ")}}>here</button> -->
+{/if} 
 <!-- <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 <p style="h-10px">Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
