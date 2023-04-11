@@ -71,16 +71,27 @@ func (s *IrisServer) Serve() {
 
 	hub := websockets.NewHub(s.DB)
 
-	// router.HandleFunc("/start", IsAuthorized(func(w http.ResponseWriter, r *http.Request) {
-	// 	websockets.ServeWs(hub, w, r)
-	// }))
 	router.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
 		websockets.StartCall(hub, w, r)
 	})
 
+	platform := PlatformRoutes{
+		DB: s.DB,
+	}
+	router.HandleFunc("/getPlatform", IsAuthorized(platform.GetPlatform)).Methods("POST")
+	router.HandleFunc("/platform", IsAuthorized(platform.CreatePlatform)).Methods("POST")
+
+	message := MessageRoutes{
+		DB: s.DB,
+	}
+
+	router.HandleFunc("/getMessages", IsAuthorized(message.GetMessage)).Methods("POST")
+	router.HandleFunc("/message", IsAuthorized(message.PostMessage)).Methods("POST")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
 		AllowCredentials: true,
+		AllowedHeaders:   []string{"*"},
 	})
 
 	srv := &http.Server{

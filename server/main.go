@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"time"
 
 	httpServer "github.com/kcpetersen111/iris/server/adapter/http"
 	"github.com/kcpetersen111/iris/server/persist"
@@ -19,6 +20,7 @@ func main() {
 	flag.Parse()
 
 	db, err := persist.DbSetupConnection(setUpDB)
+	db.Database.SetConnMaxLifetime(time.Second * 10)
 	if err != nil {
 		log.Fatalf("Error in starting up the database: %v", err)
 	}

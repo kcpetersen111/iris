@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/gorilla/mux"
 	"github.com/kcpetersen111/iris/server/persist"
 	"github.com/kcpetersen111/iris/server/persist/users"
 
@@ -19,16 +18,16 @@ type UserRoutes struct {
 	DB *persist.DBInterface
 }
 
-func CreateUserRouter(db *persist.DBInterface) mux.Router {
-	userStruct := UserRoutes{
-		DB: db,
-	}
-	router := mux.NewRouter()
+// func CreateUserRouter(db *persist.DBInterface) mux.Router {
+// 	userStruct := UserRoutes{
+// 		DB: db,
+// 	}
+// 	router := mux.NewRouter()
 
-	router.HandleFunc("/user", userStruct.SignUp).Methods("POST")
+// 	router.HandleFunc("/user", userStruct.SignUp).Methods("POST")
 
-	return *router
-}
+// 	return *router
+// }
 
 type Token struct {
 	Role        string `json:"role"`
@@ -83,6 +82,14 @@ func (u UserRoutes) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.UserID = uuid.String()
+	jwt, err := GenerateJWT(user.Email, "user")
+	user.Name = jwt
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
@@ -153,10 +160,11 @@ func (u UserRoutes) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var token Token
+	var token users.User
 	token.Email = authuser.Email
 	token.Role = authuser.Role
-	token.TokenString = validToken
+	token.Name = validToken
+	token.UserID = authuser.UserID
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -177,18 +185,19 @@ func CheckPasswordHash(password, hash string) bool {
 
 func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("User authenticating")
-		// fmt.Println(r.Header["Token"])
+		// log.Printf("User authenticating")
+		// fmt.Println(r.Header)
 
-		if r.Header["Token"] == nil {
+		if r.Header["Authorization"] == nil {
 			err := fmt.Errorf("No Token Found")
+			log.Println(err)
 			json.NewEncoder(w).Encode(err)
 			return
 		}
 
 		var mySigningKey = []byte("JWTTOKEN")
 
-		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(r.Header["Authorization"][0], func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("There was an error in parsing")
 			}
@@ -196,8 +205,9 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil {
-			var err error
+			// var err error
 			err = fmt.Errorf("Your Token has been expired: %v", err)
+			log.Println(err)
 			json.NewEncoder(w).Encode(err)
 			return
 		}
@@ -217,6 +227,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		}
 
 		err = fmt.Errorf("Not Authorized")
+		log.Println(err)
 		json.NewEncoder(w).Encode(err)
 	}
 }

@@ -37,6 +37,7 @@ func (db *DBInterface) DbSetup() error {
 
 	//I am going to say platform is where they sent it ie: discord server, dm
 	//will probably need to add message id at some point if I want to add editing or deleting messages
+	//should take out receiver and just have that be the platform
 	_, err = tx.Exec(
 		`CREATE TABLE IF NOT EXISTS messages(
 			sender VARCHAR(45),
@@ -44,8 +45,7 @@ func (db *DBInterface) DbSetup() error {
 			message TEXT,
 			platform VARCHAR(45),
 			isCall INT,
-			timeStamp DATETIME,
-			PRIMARY KEY(sender, receiver)
+			timeStamp DATETIME
 			);`,
 	)
 	if err != nil {
@@ -59,7 +59,6 @@ func (db *DBInterface) DbSetup() error {
 			platformID VARCHAR(45),
 			platformName TEXT,
 			userId VARCHAR(45)
-			PRIMARY KEY(platformID)
 			);`,
 	)
 	if err != nil {
