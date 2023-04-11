@@ -3,12 +3,16 @@
 	import { each, onDestroy } from 'svelte/internal';
 	import ConversationComponent from './conversationComponent.svelte';
 	import { platformList } from '../resources/startup';
-	import Layout from './+layout.svelte';
+	import { serverAddr,serverPort } from "../resources/variables";
+	import { emailStore, jwtStore, userStore } from '../resources/login';
+	import { get } from 'svelte/store';
+	
 	const eyeLogo = new URL('../../static/eyeLogo.svg', import.meta.url).href;
 	
 
 	let creating = false;
 	let addingConversation = [];
+	let conversationName = "";
 	// need to get an array of the conversations
 	// going to be a pair of names and the uuid
 	let conversations = [];
@@ -18,24 +22,40 @@
 	onDestroy(unsub);
 
 	function createConversation(){
-//need to open a menu for the user to let input data
 		creating = !creating;
 		if (creating){
 			addingConversation.push("")
 		} else {
 			addingConversation = [];
+			conversationName = "";
 		}
 	}
 	function addRecipient(){
 		addingConversation.push("")
 		addingConversation = addingConversation;
-		console.log("succ")
 	}
-	function conversationSetup(){
+	async function conversationSetup(){
 		creating = false;
-		console.log(addingConversation)
-
+		let privatConversationName = conversationName;
+		let privateConversationRecipients = addingConversation;
+		conversationName = "";
 		addingConversation = [];
+		let body = {
+			"platformName": privatConversationName,
+			"UserId": privateConversationRecipients,
+			"email": get(emailStore)
+		}
+		let res = await fetch("http://"+serverAddr+":"+serverPort+"/platform",{
+				method: "POST",
+				credentials:"include",
+				headers: {
+					"Content-Type":"application/json",
+					"Authorization": get(jwtStore)
+				},
+				body: JSON.stringify(body)
+			},
+		)
+		console.log(res.status)
 	}
 </script>
 
@@ -61,6 +81,11 @@
 		
 	</span>
 	{#if creating}
+	<span class="flex justify-center">
+		<input placeholder="Conversation Name"
+			class=" m-1 w-5/6"
+			bind:value={conversationName}>
+	</span>
 		{#each addingConversation as field, index}
 			<span class="flex justify-center">
 				<input placeholder="Recipient"

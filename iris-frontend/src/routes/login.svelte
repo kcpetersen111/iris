@@ -46,6 +46,7 @@ let flag = true;
             }}>
         <input placeholder="Password" 
             class="h-10 w-full mb-10" 
+            type="password"
             bind:value={Password} 
             on:keydown={(key)=>{
                 if(key.code=="Enter"){

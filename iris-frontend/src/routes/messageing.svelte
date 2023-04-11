@@ -1,15 +1,18 @@
 <script>
     import {sendMessage} from "./../resources/messages"
     import { currentConvo } from '../resources/startup';
+    import {get, writable} from "svelte/store"
+    import {messageStore} from "../resources/messages"
+   
+
     function send(){
         if(message==""){
             return;
         }
-        
-        sendMessage("",message)
+        sendMessage(message)
         message = "";
-
     }
+
     let message = "";
     let inConversation = false;
     currentConvo.subscribe((conver)=>{
@@ -18,6 +21,10 @@
         }
     })
 
+    let displayMessages = [];
+    messageStore.subscribe(()=>{
+        displayMessages = get(messageStore)
+    })
 
     // gonna need something to send messages
 </script>

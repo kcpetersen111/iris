@@ -2,6 +2,8 @@ import { serverAddr,serverPort } from "../resources/variables";
 import {writable} from "svelte/store"
 
 const userStore = writable("")
+const jwtStore = writable("")
+const emailStore = writable("")
 
 export async function login(Email, Password){
     // console.log(Email)
@@ -28,10 +30,12 @@ export async function login(Email, Password){
     }
         
 
-    if(response.status ==201){
+    if(response.status ==201 || response.status == 200){
         console.log("Successful login attempt")
+        console.log(body)
         userStore.set(body.userID)
-        console.log(userStore)
+        jwtStore.set(body.name)
+        emailStore.set(Email)
 
     }else if(response.status ==401){
         console.log("Unsuccessful login attempt")
@@ -61,8 +65,8 @@ export async function createUser(Email, Password){
     let body;
     try {
         body = await response.json();
-        console.log(body);
-        console.log("break")
+        // console.log(body);
+        // console.log("break")
         
     } catch (error) {
         console.log("response body was not json");
@@ -71,6 +75,8 @@ export async function createUser(Email, Password){
     if(response.status ==201 || response.status==200){
         console.log("Successful user creation")
         userStore.set(body.userID)
+        jwtStore.set(body.name)
+        emailStore.set(Email)
 
 
     }else if(response.status ==401){
@@ -88,4 +94,4 @@ export async function createUser(Email, Password){
     }
 }
 
-export { userStore }
+export { userStore, jwtStore, emailStore }
