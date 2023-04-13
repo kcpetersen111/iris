@@ -8,6 +8,7 @@
 	import { get } from 'svelte/store';
 	import { currentConvo, platformList } from '../resources/startup';
 	import { messageStore } from '../resources/messages';
+	import InfoBar from './infoBar.svelte';
 	
 	let syncWorker = undefined;
 	let userId = "";
@@ -19,6 +20,11 @@
 			startPulling()
 		}
 	})
+	let msgTimeStamp = {
+		"time": null,
+		"msg":null,
+		"sender":null
+	};
 	const loadWorker = async () => {
 		const SyncWorker = await import('../resources/webworker?worker');
 		
@@ -36,7 +42,15 @@
 					platformList.set(msg.data["platform"])
 				}
 				if(msg.data["message"]){
-					messageStore.set(msg.data["message"])
+					if (msgTimeStamp.time != msg.data["message"][msg.data["message"].length-1].timestamp ||
+						msgTimeStamp.msg != msg.data["message"][msg.data["message"].length-1].message ||
+						msgTimeStamp.sender != msg.data["message"][msg.data["message"].length-1].sender){
+
+							msgTimeStamp.time = msg.data["message"][msg.data["message"].length-1].timestamp 
+							msgTimeStamp.msg = msg.data["message"][msg.data["message"].length-1].message 
+							msgTimeStamp.sender = msg.data["message"][msg.data["message"].length-1].sender
+							messageStore.set(msg.data["message"])
+						}
 				}
 			}catch{
 			}
@@ -65,6 +79,7 @@ onDestroy(() => syncWorker?.postMessage({ msg: 'stop' }));
 {#if userId !=""}
 	<!-- Home page -->
 		<div class="grid grid-cols-6 grid-rows-6 h-screen">
+			<!-- <InfoBar /> -->
 			<ConversationBar />
 			<Messageing />
 		</div>
