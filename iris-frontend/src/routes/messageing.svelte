@@ -30,7 +30,7 @@
         node.scroll({ top: node.scrollHeight, behavior: 'smooth' });
     }; 
 
-    afterUpdate(()=>{scrollToBottom(scrollBind)})
+    afterUpdate(()=>{scrollToBottom(scrollBind);lastSender=null})
 
     let displayMessages = [];
     messageStore.subscribe(()=>{
@@ -38,8 +38,15 @@
             console.log(displayMessages)
             // scrollToBottom(scrollBind)
     })
-
-    // gonna need something to send messages
+    let lastSender;
+    function checkLast(m){
+        if (m["sender"] == lastSender){
+            lastSender = m["sender"]
+            return true       
+        }
+        lastSender = m["sender"]
+        return false
+    }
 </script>
 
 <div class="col-start-2 col-span-5 row-span-full row-start-1  max-h-full">
@@ -47,8 +54,8 @@
         <div bind:this={scrollBind} class="row-start-1 row-span-5 overflow-y-scroll">
             <div class=" pt-1">
                 {#each displayMessages as m }
-            
-                    <Message message={m}/>
+                    
+                    <Message message={m} same={checkLast(m)}/>
                     
                 {/each}
                 <!-- {#if first}

@@ -5,13 +5,13 @@
 	// will need name and a conversation to be pulled up when this is clicked on
 import { currentConvo } from '../resources/startup';
 import {serverAddr, serverPort } from '../resources/variables'
+	import { messageStore } from '../resources/messages';
 
 
 export let convo: any;
 let audioStream;
 function changeConversation() {
-	//fetch the conversation
-	// change the conversation I will just set it in a store and then either do a force reload or have the state change take care of it
+	messageStore.set([])
 	//switch what is in focus for the user
 	currentConvo.set(convo.platformID);
 	console.log(convo.platformName + ' was swaped to');
