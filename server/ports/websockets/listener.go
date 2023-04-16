@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -86,18 +87,16 @@ persistCallSetup:
 			return
 		}
 	}
-
-	client := &Client{hub: hub, conn: conn, send: nil, metaData: init, receive: make(chan []byte, 256)}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	client := &Client{hub: hub, conn: conn, send: nil, metaData: init, receive: make(chan []byte, 256), wg: &wg}
 	client.hub.register <- client
 
-	//have incoming call
-
-	//write to db to say there is a call waiting for client 2
-
-	//wait 30 secs for the them to pick up if not close the connection
-
+	wg.Wait()
+	fmt.Println("Past wg")
 	// go client.handleInput()
 	go client.handleInput()
+	go client.handleOutput()
 }
 
 func (c *Client) handleInput() {
@@ -120,7 +119,6 @@ func (c *Client) handleInput() {
 		if c.send != nil {
 			c.send <- msg
 		}
-		// fmt.Println(msg)
 		// err = c.conn.WriteMessage(2, msg)
 		// if err != nil {
 		// 	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -139,6 +137,9 @@ func (c *Client) handleInput() {
 func (c *Client) handleOutput() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		// c.receive = nil
+		// c.send = nil
+		c.ctxCancel()
 		ticker.Stop()
 		c.conn.Close()
 	}()
@@ -173,6 +174,9 @@ func (c *Client) handleOutput() {
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
+		case <-c.ctx.Done():
+			return
+
 		}
 	}
 }

@@ -8,7 +8,7 @@
 	import { get } from 'svelte/store';
 	import { currentConvo, platformList } from '../resources/startup';
 	import { messageStore } from '../resources/messages';
-	import InfoBar from './infoBar.svelte';
+	// import InfoBar from './infoBar.svelte';
 	
 	let syncWorker = undefined;
 	let userId = "";

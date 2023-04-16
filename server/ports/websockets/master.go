@@ -1,7 +1,9 @@
 package websockets
 
 import (
+	"context"
 	"fmt"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/kcpetersen111/iris/server/persist"
@@ -26,6 +28,10 @@ type Client struct {
 
 	//inbound data
 	receive chan []byte
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+	wg        *sync.WaitGroup
 }
 
 func NewHub(db *persist.DBInterface) *Hub {
@@ -46,6 +52,8 @@ func (h *Hub) run() {
 		case client := <-h.register:
 			h.clients[client] = true
 			//figure out who they are suppose to be talking to
+			client.ctx, client.ctxCancel = context.WithCancel(context.Background())
+
 			for c := range h.clients {
 				//if someone is here waiting for you and you try to join them
 				// if c.metaData.Callee == client.metaData.Caller && c.metaData.Caller == client.metaData.Callee {
@@ -53,15 +61,21 @@ func (h *Hub) run() {
 
 				//for testing
 				if c.metaData.Caller != client.metaData.Caller {
-
+					ctx, cancel := context.WithCancel(context.Background())
+					c.ctx = ctx
+					c.ctxCancel = cancel
+					client.ctx = ctx
+					client.ctxCancel = cancel
 					c.send = client.receive
 					client.send = c.receive
 					fmt.Println("call started")
 				}
 				//if client is the first one here
 			}
+			client.wg.Done()
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
+				client.ctxCancel()
 				delete(h.clients, client)
 				close(client.receive)
 			}

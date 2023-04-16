@@ -5,11 +5,43 @@
 	// will need name and a conversation to be pulled up when this is clicked on
 import { currentConvo } from '../resources/startup';
 import {serverAddr, serverPort } from '../resources/variables'
-	import { messageStore } from '../resources/messages';
+import { messageStore } from '../resources/messages';
+	import { onMount } from 'svelte';
 
 
 export let convo: any;
 let audioStream;
+let audioURL;
+let sourceBuffer;
+let speakerReady = false;
+let source:MediaSource;
+let queue = [];
+onMount(()=>{
+	source = new MediaSource();
+	
+	source.addEventListener('sourceopen',(ev:Event)=>{
+		console.log("source open")
+		let b:MediaSource = ev.target;
+		// console.log(b.canPlayType("audio/webm; codecs=opus"))
+		sourceBuffer = b.addSourceBuffer("audio/webm;codecs=opus")
+		sourceBuffer.addEventListener('update',()=>{
+			console.log("source buffer update")
+			if (queue.length > 0 && !sourceBuffer.updating) {
+				sourceBuffer.appendBuffer(queue.shift());
+			}
+		})
+		speakerReady = true;
+	},false)
+	// audioURL = URL.createObjectURL(source);
+	// const au = new Audio()
+	// au.autoplay = true
+	// au.src = audioURL
+	// au.play()
+	// au.src = audioURL
+// 	audioURL = new MediaSource();
+// 	sourceBuffer = audioURL.addSourceBuffer("audio/webm; codecs='opus'")
+})
+let inCall = false;
 function changeConversation() {
 	messageStore.set([])
 	//switch what is in focus for the user
@@ -60,15 +92,26 @@ async function setUpwebSocks(reconnectTries:number,) {
 			}, 1000);
 		}
 	})
-	socket.addEventListener('message',(msg)=>{console.log(msg)})
+	// socket.addEventListener('message',(msg)=>{console.log(msg);playBlob(msg)})
 	await until(_=> connected == true)
 	return socket
+}
+
+async function endCall() {
+	inCall = false
+}
+async function awaitEndCall(ws) {
+	await until((_=> inCall == false))
+	ws.close()
+	source.endOfStream();
 }
 
 async function startCall() {
 	console.log("starting a call")
 	let localStreamRequest = getAudioStream();
 	
+	// audioURL = new MediaSource();
+	// sourceBuffer = audioURL.addSourceBuffer("audio/webm; codecs='opus'")
 
 	let ws;
 	if (window['WebSocket']){
@@ -79,21 +122,62 @@ async function startCall() {
 		return;
 	}
 
-	let audioStream = await localStreamRequest;
-	const mr = new MediaRecorder(audioStream);
-	mr.start(3)
-	mr.ondataavailable = (e) =>{
-		ws.send(e)
-	}
-	ws.addEventListener('close',()=>{
-		mr.stop()
-	})
+	inCall = true;
 	
-	// ws.addEventListener('open',(event)=>{
-	// 	ws.send()
-	// })
-	// playStream(audioStream)
+	
+	let audioStream = await localStreamRequest;
 
+	
+	
+
+	const mr = new MediaRecorder(audioStream,{mimeType:"audio/webm; codecs= opus"});
+	mr.start(3)
+	mr.ondataavailable = e =>{
+		if(!speakerReady){
+			return;
+		}
+		
+		// console.log("made it to appendBuffer")
+		// e.data.arrayBuffer().then(b=>{
+		// 	sourceBuffer.appendBuffer(b)
+		// })
+		 console.log(e)
+		ws.send(e.data)
+	}
+
+	ws.addEventListener('message',(msg)=>{
+		console.log("got a message")
+		if (sourceBuffer.updating || !speakerReady || queue.length > 0){
+			queue.push(msg)
+		} else{
+			
+			msg.data.arrayBuffer().then(b=>{
+				console.log(sourceBuffer)
+				sourceBuffer.appendBuffer(b)
+			})
+		}
+	})
+	ws.addEventListener('close',()=>{
+		console.log("MR stop")
+		mr.stop()
+		audioStream.getAudioTracks()[0].stop()
+		// audioURL.endOfStream()
+	})
+	awaitEndCall(ws);
+
+	playBlob()
+}
+
+// au.controls = true
+async function playBlob(){
+	const au = new Audio()
+	au.onclose = ()=>{
+		console.log("closing audio")
+	}
+	au.autoplay = true
+	au.src = URL.createObjectURL(source); 
+	// au.volume = 0.50;
+	au.play()
 }
 
 function playStream(s){
@@ -107,15 +191,21 @@ async function getAudioStream() {
 }
 
 </script>
-
-<audio>
-	<source src="{audioStream}" type="audio/mp3">
-</audio>
-
-<div
-	class="text-white hover:cursor-pointer pl-5 hover:bg-slate-400 hover:text-black flex justify-between"
-	on:click={changeConversation}
->
-	<span> {shorten(convo.platformName)} </span>
-	<span class="pr-5" on:click={startCall}>Call</span>
+<div>
+	<!-- <audio>
+		<source src="{audioURL}" type="audio/mp3">
+	</audio> -->
+	
+	<div
+		class="text-white hover:cursor-pointer pl-5 hover:bg-slate-400 hover:text-black flex justify-between"
+		on:click={changeConversation}
+	>
+		<span> {shorten(convo.platformName)} </span>
+		{#if !inCall}
+		<button class="pr-5" on:click={startCall}>Call</button>
+		{:else}
+		<button class="pr-5" on:click={endCall}>End</button>
+		{/if}
+	
+	</div>
 </div>
