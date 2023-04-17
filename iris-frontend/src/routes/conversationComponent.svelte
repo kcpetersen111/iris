@@ -98,10 +98,12 @@ async function setUpwebSocks(reconnectTries:number,) {
 }
 
 async function endCall() {
+	console.log("end call")
 	inCall = false
 }
 async function awaitEndCall(ws) {
 	await until((_=> inCall == false))
+	console.log("closing after end call")
 	ws.close()
 	source.endOfStream();
 }
@@ -116,7 +118,7 @@ async function startCall() {
 	let ws;
 	if (window['WebSocket']){
 		console.log("browser supports ws")
-		ws = await setUpwebSocks(0)
+		ws = await setUpwebSocks(0);
 	} else {
 		console.log("browser does not support websocket protocols")
 		return;
@@ -142,7 +144,11 @@ async function startCall() {
 		// 	sourceBuffer.appendBuffer(b)
 		// })
 		 console.log(e)
-		ws.send(e.data)
+		//  if(ws.readyState == ws.open	){
+
+			 ws.send(e.data)
+		// } else {
+		// }
 	}
 
 	ws.addEventListener('message',(msg)=>{
@@ -157,8 +163,9 @@ async function startCall() {
 			})
 		}
 	})
-	ws.addEventListener('close',()=>{
+	ws.addEventListener('close',(ev:CloseEvent)=>{
 		console.log("MR stop")
+		console.log(ev)
 		mr.stop()
 		audioStream.getAudioTracks()[0].stop()
 		// audioURL.endOfStream()

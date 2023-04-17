@@ -30,7 +30,7 @@ export async function login(Email, Password){
     }
         
 
-    if(response.status ==201 || response.status == 200){
+    if(response.status ==201 ){
         console.log("Successful login attempt")
         console.log(body)
         userStore.set(body.userID)
@@ -46,7 +46,17 @@ export async function login(Email, Password){
     }
 }
 
+function ValidateEmail(email) 
+{
+    const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, "gm");
+    return emailRegex.test(email)
+    
+}
+
 export async function createUser(Email, Password){
+    if(!ValidateEmail(Email)){
+        return false;
+    }
     let msg = {
         "name": Email,
         "email": Email,
@@ -77,20 +87,20 @@ export async function createUser(Email, Password){
         userStore.set(body.userID)
         jwtStore.set(body.name)
         emailStore.set(Email)
-
+        return true;
 
     }else if(response.status ==401){
         console.log("Unsuccessful create attempt")
         this.loginPassword ="";
-        return
+        return false
 
     } else if(response.status == 409){
         console.log("User email is taken")
         this.loginPassword ="";
-        return
+        return false
     }else {
         console.log("There was some sort of error. ", response.status, response);
-        return
+        return false
     }
 }
 

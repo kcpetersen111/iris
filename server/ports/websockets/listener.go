@@ -23,7 +23,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 4096
 )
 
 type Hub struct {
@@ -93,14 +93,13 @@ persistCallSetup:
 	client.hub.register <- client
 
 	wg.Wait()
-	fmt.Println("Past wg")
-	// go client.handleInput()
 	go client.handleInput()
 	go client.handleOutput()
 }
 
 func (c *Client) handleInput() {
 	defer func() {
+		log.Println("Closing input from client")
 		c.hub.unregister <- c
 		c.conn.Close()
 	}()
@@ -114,23 +113,12 @@ func (c *Client) handleInput() {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
+			log.Println(fmt.Sprintf("Error reading message, closing Input, Error: %v", err))
 			break
 		}
 		if c.send != nil {
 			c.send <- msg
 		}
-		// err = c.conn.WriteMessage(2, msg)
-		// if err != nil {
-		// 	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-		// 		log.Printf("error: %v", err)
-		// 	}
-		// 	break
-		// }
-
-		// c.conn.UnderlyingConn().Write(message)
-
-		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		// c.hub.broadcast <- message
 	}
 }
 
@@ -139,6 +127,7 @@ func (c *Client) handleOutput() {
 	defer func() {
 		// c.receive = nil
 		// c.send = nil
+		log.Println("logging call end")
 		c.ctxCancel()
 		ticker.Stop()
 		c.conn.Close()
@@ -171,10 +160,13 @@ func (c *Client) handleOutput() {
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			fmt.Println("pinging client")
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Println("Error pinging client")
 				return
 			}
 		case <-c.ctx.Done():
+			log.Println("Context done")
 			return
 
 		}

@@ -5,6 +5,7 @@
     let Password = "";
 
 let flag = true;
+let userSuccessfullyCreated = true;
     
 </script>
 <div class="flex  h-screen w-screen  items-center justify-center">
@@ -22,9 +23,7 @@ let flag = true;
             class=" h-10 w-full mb-10" 
             bind:value={Email} 
             on:keydown={(key)=>{if(key.code=="Enter"){
-                login(Email,Password);
-                Password="";
-                Email=""
+                flag=false;
                 }
             }}>
         <span class="flex justify-between h-12">
@@ -38,8 +37,9 @@ let flag = true;
         </span>
 
         {:else}
-        <input placeholder="Email" 
-            class=" text-gray-600 h-10 w-full mb-10" 
+        <input placeholder="{userSuccessfullyCreated?"Email":"Invalid Email"}" 
+            class="  h-10 w-full mb-10 {userSuccessfullyCreated?"":" placeholder-red-600"}" 
+           
             bind:value={Email} 
             on:click={()=>{
                 flag = true;
@@ -68,7 +68,10 @@ let flag = true;
         </button>
         <button 
             on:click={()=>{
-                createUser(Email, Password);
+                createUser(Email, Password).then((success)=>{
+                    userSuccessfullyCreated = success;
+                    console.log(userSuccessfullyCreated)
+                })
                 Password="";
                 Email="";
             }} 

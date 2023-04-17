@@ -80,7 +80,7 @@ func (db *DBInterface) GetMessages(platform string) ([]Message, error) {
 			messages.platform = ? AND
 			messages.isCall = 0
 		ORDER BY timeStamp
-		LIMIT 50;
+		LIMIT 200;
 	`, platform)
 	if err != nil {
 		log.Println(fmt.Sprintf("Error in sql request: %v", err))
