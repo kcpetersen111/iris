@@ -89,7 +89,7 @@ func (s *IrisServer) Serve() {
 	router.HandleFunc("/message", IsAuthorized(message.PostMessage)).Methods("POST")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:4173", "http://binary141.com:4173", "http://localhost:5173"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"*"},
 	})

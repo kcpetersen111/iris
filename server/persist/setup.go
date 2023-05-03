@@ -2,6 +2,7 @@ package persist
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -11,9 +12,9 @@ type DBInterface struct {
 	Database *sql.DB
 }
 
-func DbSetupConnection(setUpDB bool) (*DBInterface, error) {
+func DbSetupConnection(setUpDB bool, mysqlPort int) (*DBInterface, error) {
 	log.Printf("Starting database")
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/irisDB")
+	db, err := sql.Open("mysql", fmt.Sprintf("root:password@tcp(localhost:%v)/irisDB", mysqlPort))
 	if err != nil {
 		// log.Printf("Error starting up the database: %v\n", err)
 		return &DBInterface{}, err
